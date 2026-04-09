@@ -100,7 +100,7 @@ function getCalleAproximada(lat, lon) {
 // ----------------------------------------------------
 const kb = (rows) => ({ reply_markup: { inline_keyboard: rows } });
 const stripBOM = (s) => String(s || '').replace(/^\uFEFF/, '');
-const fmtTimeHHMM = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+const fmtTimeHHMM = (d) => d.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false });
 const norm = (s) => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s\-\.]/g,' ').replace(/\s+/g,' ').trim().toUpperCase();
 
 /* ---------------- Carga de líneas desde ./data ---------------- */
@@ -451,15 +451,18 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
 
   const all=[];
   // ... el resto del comando queda igual
+  const all=[];
   for (const l of LINES){
     try{
       const arr=obtenerArribos(parada, l.linea);
-      for (const a of arr) all.push({ ...a, linea:l.linea, minutos:a.minutos??999 });
+      // Asignamos el 9999 a una variable temporal 'sortMin' para ordenar sin romper el texto
+      for (const a of arr) all.push({ ...a, linea:l.linea, sortMin: a.minutos ?? 9999 });
     }catch{}
   }
   if (!all.length) return bot.sendMessage(chatId, `🚌 *Llegadas a parada ${parada} (todas las líneas)*\n${stopLine}\n\n_No se encontraron arribos._`, { parse_mode:'Markdown' });
 
-  all.sort((a,b)=>(a.minutos||999)-(b.minutos||999));
+  // Ordenamos usando la nueva variable 'sortMin'
+  all.sort((a,b)=> a.sortMin - b.sortMin);
 
   const now=new Date();
   const textLines = all.map(a=>{
@@ -470,7 +473,6 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
     const dest=a.destino?` → ${a.destino}`:'';
     const etaTxt=eta?` · ETA ${eta}`:'';
     
-    // NUEVO: Calculamos la calle
     const ubicacion = (a.lat && a.lon) ? getCalleAproximada(a.lat, a.lon) : null;
     const ubicacionTxt = ubicacion ? `\n   📍 Aprox: ${ubicacion}` : '';
     const vmap=a.vehiculo_maps?`\n   🗺️ Link: ${a.vehiculo_maps}`:'';
