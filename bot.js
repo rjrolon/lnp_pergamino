@@ -249,19 +249,25 @@ function showFavsMenu(chatId){
 function showHelp(chatId) {
   const texto = `📖 *GUÍA DE USO Y COMANDOS*\n\n` +
     `*Búsqueda rápida:*\n` +
-    `• /parada [nro] — Arribos de todas las líneas en una parada (ej. \`/parada 0026\`).\n` +
-    `• /codigo [parada] [linea] — Arribos de una sola línea (ej. \`/codigo 0026 329\`).\n` +
+    `• /parada [nro] — Arribos de todas las líneas en una parada (ej. \`/parada 0064\`).\n` +
+    `• /codigo [parada] [linea] — Arribos de una sola línea (ej. \`/codigo 0064 329\`).\n` +
     `• /menu — Buscá paradas navegando por las calles.\n\n` +
     `*Seguimiento en vivo:*\n` +
-    `• /seguir [parada] [linea] [coche] — Fuerza el seguimiento de un coche específico, ideal si todavía está lejos y no figura en la lista (ej. \`/seguir 0026 329 44\`).\n\n` +
+    `• /seguir [parada] [linea] [coche] — Fuerza el seguimiento de un coche específico (ej. \`/seguir 0064 329 50\`).\n\n` +
     `*Tus viajes:*\n` +
-    `• /favs — Muestra tu lista de paradas guardadas con acceso rápido.\n\n` +
-    `*Códigos de Líneas (Ramales):*\n` +
-    `🚌 *329* = Ramal A\n` +
-    `🚌 *330* = Ramal B\n` +
-    `🚌 *331* = Ramal C\n` +
-    `🚌 *332* = Ramal D\n` +
-    `🚌 *333* = Ramal E`;
+    `• /favs — Muestra tu lista de paradas guardadas.\n\n` +
+    `📍 *PARADAS CLAVES:*\n` +
+    `• *0007* — Terminal Pergamino\n` +
+    `• *0009* — Italia y Sabino\n` +
+    `• *0025* — Av. de Mayo e Italia\n` +
+    `• *0056* — C. Costa y P. Gonzalez\n` +
+    `• *0058* — Castelli y Moreno\n` +
+    `• *0064* — Plaza 25 de Mayo\n` +
+    `• *0208* — Fullana y Av. Illia\n` +
+    `• *0284* — Bv. Rocha y Echevarria\n\n` +
+    `🚌 *LÍNEAS (RAMALES):*\n` +
+    `*329* = Ramal A  |  *330* = Ramal B  |  *331* = Ramal C\n` +
+    `*332* = Ramal D  |  *333* = Ramal E`;
   
   bot.sendMessage(chatId, texto, { parse_mode: 'Markdown' });
 }
