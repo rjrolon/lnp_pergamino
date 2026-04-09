@@ -171,7 +171,15 @@ function fmtArribos(arr, { parada, linea, stopGeo=null }){
   const stopLine = getStopLineStr(parada, stopGeo);
   if (!arr.length) return `🚌 *${lineTitle(linea)}*\n${stopLine}\n\n_No hay arribos disponibles._`;
 
+  // NUEVO: Ordenar para que "Arribando.." quede primero siempre
+  arr.sort((a, b) => {
+    const minA = (a.hora && a.hora.toLowerCase().includes('arribando')) ? 0 : ((a.minutos != null && a.minutos < 900) ? a.minutos : 9999);
+    const minB = (b.hora && b.hora.toLowerCase().includes('arribando')) ? 0 : ((b.minutos != null && b.minutos < 900) ? b.minutos : 9999);
+    return minA - minB;
+  });
+
   const now = new Date();
+  // ... el resto de la función sigue igual (const lines = arr.map...)
   const lines = arr.map(a=>{
     const realMin = (a.minutos != null && a.minutos < 900) ? a.minutos : null;
     const eta = (realMin != null) ? fmtTimeHHMM(new Date(now.getTime() + realMin*60000)) : null;
@@ -204,11 +212,10 @@ function stopsKeyboard(paradas, linea){
   return kb(rows);
 }
 function trackingKeyboardFromArribos(arribos, linea, parada){
-  const rows=[]; let count=0;
+  const rows=[]; 
   for(const a of arribos){
     if(!a.interno) continue;
     rows.push([{ text:`📡 Seguir coche ${a.interno}`, callback_data:`trk_start:${linea}:${parada}:${a.interno}` }]);
-    if(++count>=3) break;
   }
   return rows.length ? { reply_markup: { inline_keyboard: rows } } : {};
 }
@@ -422,7 +429,12 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
     try{
       const arr = obtenerArribos(parada, l.linea);
       for (const a of arr) {
-        const sortMin = (a.minutos != null && a.minutos < 900) ? a.minutos : 9999;
+        let sortMin = 9999;
+        if (a.hora && a.hora.toLowerCase().includes('arribando')) {
+          sortMin = 0; // Prioridad máxima a los que están llegando
+        } else if (a.minutos != null && a.minutos < 900) {
+          sortMin = a.minutos;
+        }
         all.push({ ...a, linea:l.linea, sortMin });
       }
     }catch{}
@@ -449,11 +461,10 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
     return `• ${minTxt}${etaTxt}${ramal}${dest}${coche} (${lineTitle(a.linea)})${ubicacionTxt}${vmap}`;
   }).join('\n  ───────────────\n');
 
-  const trkRows=[]; let count=0;
+  const trkRows=[]; 
   for (const a of all) {
     if (!a.interno) continue;
     trkRows.push([{ text:`📡 Seguir coche ${a.interno} (${a.ramal})`, callback_data:`trk_start:${a.linea}:${parada}:${a.interno}` }]);
-    if (++count>=3) break;
   }
   const replyMarkup = trkRows.length ? { reply_markup: { inline_keyboard: trkRows } } : {};
 
