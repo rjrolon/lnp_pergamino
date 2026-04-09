@@ -1,25 +1,6 @@
 /**
  * BOT — estable + autoguiados + seguimiento con autostop 10'
  * -----------------------------------------------------------
- * /start  -> bienvenida + accesos rápidos
- * /menu   -> listado de líneas/ramales desde ./data/linea_*.json
- * /codigo [parada] [linea] -> directo o autoguiado
- * /parada [parada]         -> global (todas las líneas) o autoguiado
- * /favs   -> favoritos (⏱️ consultar, 🖊️ renombrar, 🗑️ borrar)
- *
- * Seguimiento 📡:
- * - Botones "📡 Seguir coche" en respuestas de /codigo y /parada
- * - Refresca cada TRACK_REFRESH_MS (default 60s)
- * - Autostop a los TRACK_MAX_MS (default 10 min)
- * - Avisos:
- *    • ⏳ cuando faltan ≤2 min para autostop
- *    • 🚏 cuando ETA ≤5 min (una sola vez)
- *
- * Requiere:
- *  - scripts/arribos_cli.js (ejecuta PS1 y normaliza JSON)
- *  - ./data/linea_*.json (calles → intersecciones → paradas)
- *  - .env con TELEGRAM_TOKEN, PS_SCRIPT, PAYLOAD_TEMPLATE
- *    (opcional) TRACK_REFRESH_MS, TRACK_MAX_MS
  */
 
 const fs = require('fs');
@@ -27,6 +8,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const TelegramBot = require('node-telegram-bot-api');
 const { spawnSync } = require('child_process');
+
 // --- Servidor Dummy para mantener contento a Render ---
 const http = require('http');
 const port = process.env.PORT || 3000;
@@ -37,6 +19,7 @@ http.createServer((req, res) => {
   console.log(`Servidor web escuchando en el puerto ${port}`);
 });
 // ------------------------------------------------------
+
 const TOKEN = process.env.TELEGRAM_TOKEN;
 if (!TOKEN) { console.error('[ERROR] Falta TELEGRAM_TOKEN en .env'); process.exit(1); }
 const bot = new TelegramBot(TOKEN, { polling: true });
@@ -56,7 +39,6 @@ const LINE_NAMES = { "329":"Ramal A", "330":"Ramal B", "331":"Ramal C", "332":"R
 const lineTitle = (linea) => LINE_NAMES[linea] || `Línea ${linea}`;
 
 /* ---------------- Utils ---------------- */
-// --- NUEVO: Calcular distancia y calle aproximada ---
 function getDistancia(lat1, lon1, lat2, lon2) {
   const R = 6371e3; // Radio de la Tierra en metros
   const rLat1 = lat1 * Math.PI/180;
@@ -85,19 +67,17 @@ function getCalleAproximada(lat, lon) {
             const dst = getDistancia(lat, lon, p.lat, p.lon);
             if (dst < minDst) {
               minDst = dst;
-              // Guardamos la calle y le sacamos el "-PERGAMINO" para que quede más limpio
-              calleCercana = (i.descripcion || c.descripcion || '').replace('-PERGAMINO', '').trim();
+              calleCercana = (i.descripcion || c.descripcion || '').replace(/-PERGAMINO/ig, '').trim();
             }
           }
         }
       }
     }
   }
-  // Si el colectivo está a menos de 400 metros de una parada conocida, mostramos la calle
   if (minDst < 400 && calleCercana) return calleCercana;
   return null;
 }
-// ----------------------------------------------------
+
 const kb = (rows) => ({ reply_markup: { inline_keyboard: rows } });
 const stripBOM = (s) => String(s || '').replace(/^\uFEFF/, '');
 const fmtTimeHHMM = (d) => d.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false });
@@ -126,7 +106,6 @@ let LINES = loadLines();
 
 /* ---------------- Geo de parada (para links de Maps) ---------------- */
 function cleanStreetName(name) {
-  // Limpia el nombre: saca "-PERGAMINO", saca puntos finales y espacios extra
   return String(name || '').replace(/-PERGAMINO/ig, '').replace(/\.+$/, '').trim();
 }
 
@@ -141,7 +120,6 @@ function findStopGeo(linea, paradaId) {
         if (id === String(paradaId)) {
           const slat = p.lat != null ? Number(p.lat) : null;
           const slon = p.lon != null ? Number(p.lon) : null;
-          // Armamos un link directo y limpio a Google Maps usando la latitud y longitud
           const smaps = (slat != null && slon != null) ? `https://www.google.com/maps?q=${slat},${slon}` : null;
           
           const cName = cleanStreetName(c.descripcion || c.Descripcion);
@@ -160,7 +138,6 @@ function getStopLineStr(parada, stopGeo) {
   let txt = `🛑 Parada ${parada}`;
   if (stopGeo && (stopGeo.name || stopGeo.maps)) {
     const linkText = stopGeo.name || "Ver mapa";
-    // Formato Markdown de Telegram: [Texto](URL)
     txt += stopGeo.maps ? ` · [${linkText}](${stopGeo.maps})` : ` · ${linkText}`;
   }
   return txt;
@@ -175,7 +152,7 @@ function setFavName(chatId, parada, linea, name){ const favs=loadFavs(chatId); c
 function delFav(chatId, parada, linea){ const favs=loadFavs(chatId); const keep=favs.filter(f=>!(f.parada===parada&&f.linea===linea)); saveFavs(chatId,keep); return keep.length!==favs.length; }
 function listFavsKeyboard(chatId){ const favs=loadFavs(chatId); if(!favs.length) return kb([[{text:'— (sin favoritos) —', callback_data:'noop'}]]); const rows=[]; for(const f of favs.slice(0,MAX_BTNS)){ const label=f.name?`${f.name} (${f.parada} ${f.linea})`:`${f.parada} ${f.linea}`; rows.push([{text:`⏱️ ${label}`,callback_data:`fav_go:${f.parada}:${f.linea}`},{text:'🖊️',callback_data:`fav_rename:${f.parada}:${f.linea}`},{text:'🗑️',callback_data:`fav_del:${f.parada}:${f.linea}`}]); } return kb(rows); }
 
-/* ---------------- Arribos (puente Node→PS1) ---------------- */
+/* ---------------- Arribos (puente Node) ---------------- */
 function obtenerArribos(parada, linea){
   const script = path.join(__dirname, 'scripts','arribos_cli.js');
   const res = spawnSync(process.execPath, [script,'--parada',parada,'--linea',linea], { encoding:'utf8', env:{...process.env} });
@@ -193,19 +170,20 @@ function stopsOfIntersection(calleObj, iIdx){ const inter=(calleObj?.interseccio
 function fmtArribos(arr, { parada, linea, stopGeo=null }){
   const stopLine = getStopLineStr(parada, stopGeo);
   if (!arr.length) return `🚌 *${lineTitle(linea)}*\n${stopLine}\n\n_No hay arribos disponibles._`;
-  // ... el resto de la función queda igual
+
   const now = new Date();
   const lines = arr.map(a=>{
-    const eta=(a.minutos!=null)?fmtTimeHHMM(new Date(now.getTime()+a.minutos*60000)):null;
-    const minTxt=(a.minutos!=null)?`${a.minutos} min`:(a.hora||'—');
+    const realMin = (a.minutos != null && a.minutos < 900) ? a.minutos : null;
+    const eta = (realMin != null) ? fmtTimeHHMM(new Date(now.getTime() + realMin*60000)) : null;
+    const minTxt = (realMin != null) ? `${realMin} min` : (a.hora || '—');
+    
     const ramal=a.ramal?` · ${a.ramal}`:'';
     const dest=a.destino?` → ${a.destino}`:'';
     const coche=a.interno?` · Coche ${a.interno}`:'';
     
-    // NUEVO: Calculamos la calle
     const ubicacion = (a.lat && a.lon) ? getCalleAproximada(a.lat, a.lon) : null;
     const ubicacionTxt = ubicacion ? `\n   📍 Aprox: ${ubicacion}` : '';
-    const vmap=a.vehiculo_maps?`\n   🗺️ Link: ${a.vehiculo_maps}`:'';
+    const vmap = a.vehiculo_maps ? `\n   🗺️ Link: ${a.vehiculo_maps}` : '';
     
     const etaTxt=eta?` · ETA ${eta}`:'';
     return `• ${minTxt}${etaTxt}${ramal}${dest}${coche}${ubicacionTxt}${vmap}`;
@@ -270,26 +248,25 @@ function buildTrackText({ linea, parada, stopGeo, coche }){
   const title = `📡 Seguimiento — ${lineTitle(linea)} · Coche ${coche.interno}`;
   const stopLine = getStopLineStr(parada, stopGeo);
   const now = new Date();
-  const eta=(coche.minutos!=null)?fmtTimeHHMM(new Date(now.getTime()+coche.minutos*30000)):null;
-  const minTxt=(coche.minutos!=null)?`${coche.minutos} min`:(coche.hora||'—');
-  const ramal=coche.ramal?` · ${coche.ramal}`:'';
-  const dest=coche.destino?` → ${coche.destino}`:'';
   
-  // NUEVO: Calcular calle aproximada para el coche en seguimiento
+  const realMin = (coche.minutos != null && coche.minutos < 900) ? coche.minutos : null;
+  const eta = (realMin != null) ? fmtTimeHHMM(new Date(now.getTime() + realMin*60000)) : null;
+  const minTxt = (realMin != null) ? `${realMin} min` : (coche.hora || '—');
+  
+  const ramal = coche.ramal ? ` · ${coche.ramal}` : '';
+  const dest = coche.destino ? ` → ${coche.destino}` : '';
+  
   const ubicacion = (coche.lat && coche.lon) ? getCalleAproximada(coche.lat, coche.lon) : null;
   const ubicacionTxt = ubicacion ? `\n📍 Aprox: ${ubicacion}` : '';
+  const vmap = coche.vehiculo_maps ? `\n🗺️ Link: ${coche.vehiculo_maps}` : (coche.lat!=null&&coche.lon!=null ? `\n🗺️ Link: https://www.google.com/maps?q=${coche.lat},${coche.lon}` : '');
   
-  // Arreglamos también el ícono y el link de maps acá por las dudas
-  const vmap = coche.vehiculo_maps ? `\n🗺️ Link: ${coche.vehiculo_maps}` : (coche.lat!=null&&coche.lon!=null ? `\n🗺️ Link: https://www.google.com/maps?q=$${coche.lat},${coche.lon}` : '');
-  
-  const upd=coche.actualizado?`\n⏱️ ${coche.actualizado}`:'';
-  const etaTxt=eta?` · ETA ${eta}`:'';
+  const upd = coche.actualizado ? `\n⏱️ ${coche.actualizado}` : '';
+  const etaTxt = eta ? ` · ETA ${eta}` : '';
   
   return `${title}\n${stopLine}\n\n• ${minTxt}${etaTxt}${ramal}${dest}\nCoche ${coche.interno}${ubicacionTxt}${vmap}${upd}`;
 }
 
 async function startTracking({ chatId, linea, parada, interno }){
-  // apagar si ya existe
   await stopTracking({ chatId, linea, interno });
 
   const stopGeo = findStopGeo(linea, parada);
@@ -300,22 +277,22 @@ async function startTracking({ chatId, linea, parada, interno }){
       const coche = arribos.find(a=>String(a.interno)===String(interno));
       let text;
       if (coche) text = buildTrackText({ linea, parada, stopGeo, coche });
-      else text = `📡 Seguimiento — ${lineTitle(linea)} · Coche ${interno}\n${stopGeo?.maps ? `🛑 Parada ${parada} · ${stopGeo.maps}` : `🛑 Parada ${parada}`}\n\n_No hay datos actuales. Reintento en ${Math.round(TRACK_REFRESH_MS/1000)}s._`;
+      else text = `📡 Seguimiento — ${lineTitle(linea)} · Coche ${interno}\n${getStopLineStr(parada, stopGeo)}\n\n_No hay datos actuales. Reintento en ${Math.round(TRACK_REFRESH_MS/1000)}s._`;
 
       if (first){
-        const sent=await bot.sendMessage(chatId, text, { parse_mode:'Markdown', ...trackingStopKeyboard(linea,parada,interno) });
+        const sent=await bot.sendMessage(chatId, text, { parse_mode:'Markdown', disable_web_page_preview: true, ...trackingStopKeyboard(linea,parada,interno) });
         return { id: sent.message_id, coche };
       } else {
-        await bot.editMessageText(text, { chat_id:chatId, message_id:msgId, parse_mode:'Markdown', ...trackingStopKeyboard(linea,parada,interno) });
+        await bot.editMessageText(text, { chat_id:chatId, message_id:msgId, parse_mode:'Markdown', disable_web_page_preview: true, ...trackingStopKeyboard(linea,parada,interno) });
         return { id: msgId, coche };
       }
     }catch(e){
       const errText = `📡 Seguimiento — ${lineTitle(linea)} · Coche ${interno}\n_Error obteniendo datos. Reintento en ${Math.round(TRACK_REFRESH_MS/1000)}s._`;
       if (first){
-        const sent = await bot.sendMessage(chatId, errText, { parse_mode:'Markdown', ...trackingStopKeyboard(linea,parada,interno) });
+        const sent = await bot.sendMessage(chatId, errText, { parse_mode:'Markdown', disable_web_page_preview: true, ...trackingStopKeyboard(linea,parada,interno) });
         return { id: sent.message_id, coche: null };
       } else {
-        await bot.editMessageText(errText, { chat_id:chatId, message_id:msgId, parse_mode:'Markdown', ...trackingStopKeyboard(linea,parada,interno) });
+        await bot.editMessageText(errText, { chat_id:chatId, message_id:msgId, parse_mode:'Markdown', disable_web_page_preview: true, ...trackingStopKeyboard(linea,parada,interno) });
         return { id: msgId, coche: null };
       }
     }
@@ -324,7 +301,6 @@ async function startTracking({ chatId, linea, parada, interno }){
   const first = await refresh(true);
   const startedAt = Date.now();
 
-  // registrar tracker con flags
   TRACKERS.set(tKey(chatId,linea,interno), {
     interval: null,
     msgId: first.id,
@@ -337,9 +313,8 @@ async function startTracking({ chatId, linea, parada, interno }){
     try{
       const key = tKey(chatId,linea,interno);
       const t = TRACKERS.get(key);
-      if (!t) return; // ya fue detenido
+      if (!t) return;
 
-      // Autostop si excede tiempo
       const elapsed = Date.now() - t.startedAt;
       const timeLeft = TRACK_MAX_MS - elapsed;
       if (timeLeft <= 0) {
@@ -348,7 +323,6 @@ async function startTracking({ chatId, linea, parada, interno }){
         return;
       }
 
-      // Aviso de "faltan 2 minutos"
       if (!t.warnedAutostop && timeLeft <= 2 * 60 * 1000) {
         t.warnedAutostop = true;
         try {
@@ -356,17 +330,14 @@ async function startTracking({ chatId, linea, parada, interno }){
         } catch {}
       }
 
-      // Actualizar mensaje y chequear ETA≤5
       const { id: msgId, coche } = await (async () => {
         const cur = TRACKERS.get(key);
         return await refresh(false, (cur?.msgId || first.id));
       })();
 
-      // Guardar msgId por si cambió
       const cur = TRACKERS.get(key);
       if (cur) cur.msgId = msgId;
 
-      // Aviso de "arribo ≤5 min"
       if (coche && coche.minutos != null && coche.minutos <= 5 && !cur.warnedETA5) {
         cur.warnedETA5 = true;
         try {
@@ -415,14 +386,13 @@ bot.onText(/^\/codigo(?:\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
       const stopGeo = findStopGeo(l, p);
       const arr = obtenerArribos(p, l);
       const text = fmtArribos(arr, { parada:p, linea:l, stopGeo });
-      return bot.sendMessage(chatId, text, { parse_mode:'Markdown', ...trackingKeyboardFromArribos(arr, l, p) });
+      return bot.sendMessage(chatId, text, { parse_mode:'Markdown', disable_web_page_preview: true, ...trackingKeyboardFromArribos(arr, l, p) });
     }catch(e){
       console.error(e);
       return bot.sendMessage(chatId, `❌ Error al consultar ${p} ${l}`);
     }
   }
 
-  // Autoguiado: primero pido parada
   STATE.set(chatId, { stage:'ask_codigo_parada' });
   return bot.sendMessage(chatId, '📍 Decime el *código de parada* (ej: 0063):', { parse_mode:'Markdown' });
 });
@@ -440,8 +410,6 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
   LINES = loadLines();
   if (!LINES.length) return bot.sendMessage(chatId,'No encontré líneas cargadas.');
 
-  // Encontrar un geo de parada (del primer match con coordenadas/maps)
-  // Encontrar un geo de parada (del primer match con coordenadas/maps/nombre)
   let stopGeo = null;
   for (const l of LINES) {
     const g = findStopGeo(l.linea, parada);
@@ -450,24 +418,25 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
   const stopLine = getStopLineStr(parada, stopGeo);
 
   const all=[];
-  // ... el resto del comando queda igual
-  const all=[];
   for (const l of LINES){
     try{
-      const arr=obtenerArribos(parada, l.linea);
-      // Asignamos el 9999 a una variable temporal 'sortMin' para ordenar sin romper el texto
-      for (const a of arr) all.push({ ...a, linea:l.linea, sortMin: a.minutos ?? 9999 });
+      const arr = obtenerArribos(parada, l.linea);
+      for (const a of arr) {
+        const sortMin = (a.minutos != null && a.minutos < 900) ? a.minutos : 9999;
+        all.push({ ...a, linea:l.linea, sortMin });
+      }
     }catch{}
   }
-  if (!all.length) return bot.sendMessage(chatId, `🚌 *Llegadas a parada ${parada} (todas las líneas)*\n${stopLine}\n\n_No se encontraron arribos._`, { parse_mode:'Markdown' });
+  if (!all.length) return bot.sendMessage(chatId, `🚌 *Llegadas a parada ${parada} (todas las líneas)*\n${stopLine}\n\n_No se encontraron arribos._`, { parse_mode:'Markdown', disable_web_page_preview: true });
 
-  // Ordenamos usando la nueva variable 'sortMin'
   all.sort((a,b)=> a.sortMin - b.sortMin);
 
   const now=new Date();
   const textLines = all.map(a=>{
-    const eta=(a.minutos!=null)?fmtTimeHHMM(new Date(now.getTime()+a.minutos*60000)):'';
-    const minTxt=(a.minutos!=null)?`${a.minutos} min`:(a.hora||'—');
+    const realMin = (a.minutos != null && a.minutos < 900) ? a.minutos : null;
+    const eta = (realMin != null) ? fmtTimeHHMM(new Date(now.getTime() + realMin*60000)) : '';
+    const minTxt = (realMin != null) ? `${realMin} min` : (a.hora || '—');
+    
     const coche=a.interno?` · Coche ${a.interno}`:'';
     const ramal=a.ramal?` · ${a.ramal}`:'';
     const dest=a.destino?` → ${a.destino}`:'';
@@ -475,12 +444,11 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
     
     const ubicacion = (a.lat && a.lon) ? getCalleAproximada(a.lat, a.lon) : null;
     const ubicacionTxt = ubicacion ? `\n   📍 Aprox: ${ubicacion}` : '';
-    const vmap=a.vehiculo_maps?`\n   🗺️ Link: ${a.vehiculo_maps}`:'';
+    const vmap = a.vehiculo_maps ? `\n   🗺️ Link: ${a.vehiculo_maps}` : '';
     
     return `• ${minTxt}${etaTxt}${ramal}${dest}${coche} (${lineTitle(a.linea)})${ubicacionTxt}${vmap}`;
   }).join('\n  ───────────────\n');
 
-  // Teclado de seguimiento (hasta 3 coches)
   const trkRows=[]; let count=0;
   for (const a of all) {
     if (!a.interno) continue;
@@ -489,7 +457,7 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
   }
   const replyMarkup = trkRows.length ? { reply_markup: { inline_keyboard: trkRows } } : {};
 
-  bot.sendMessage(chatId, `🚌 *Llegadas a parada ${parada} (todas las líneas)*\n${stopLine}\n\n${textLines}`, { parse_mode:'Markdown', ...replyMarkup });
+  bot.sendMessage(chatId, `🚌 *Llegadas a parada ${parada} (todas las líneas)*\n${stopLine}\n\n${textLines}`, { parse_mode:'Markdown', disable_web_page_preview: true, ...replyMarkup });
 });
 
 /* ---------------- Mensajes de texto (autoguiados + flujo por calle) ---------------- */
@@ -501,7 +469,6 @@ bot.on('message', (msg)=>{
   const st=STATE.get(chatId);
   if (!st) return;
 
-  // Autoguiado de /parada: pedir sólo código de parada
   if (st.stage === 'ask_parada_only') {
     const p = (text||'').trim();
     if (!/^\d{3,}$/.test(p)) return bot.sendMessage(chatId, 'El código debe ser numérico (ej: 0063). Probá de nuevo.');
@@ -509,13 +476,11 @@ bot.on('message', (msg)=>{
     return bot.emit('text', { ...msg, text:`/parada ${p}` });
   }
 
-  // Autoguiado de /codigo: paso 1 → pedir parada
   if (st.stage === 'ask_codigo_parada') {
     const p=(text||'').trim();
     if (!/^\d{3,}$/.test(p)) return bot.sendMessage(chatId, 'El código debe ser numérico (ej: 0063). Probá de nuevo.');
     STATE.set(chatId, { stage:'ask_codigo_linea', parada:p });
 
-    // Teclado rápido de líneas
     LINES = loadLines();
     const rows=[]; let row=[];
     for (const l of LINES){
@@ -526,7 +491,6 @@ bot.on('message', (msg)=>{
     return bot.sendMessage(chatId, 'Elegí la *línea* (ramal):', { parse_mode:'Markdown', reply_markup:{ inline_keyboard: rows } });
   }
 
-  // Autoguiado de /codigo: paso 2 → permitir escribir línea
   if (st.stage === 'ask_codigo_linea') {
     const l=(text||'').trim();
     if (!/^\d{3,}$/.test(l)) return bot.sendMessage(chatId, 'La línea debe ser numérica (ej: 329). Probá de nuevo.');
@@ -535,7 +499,6 @@ bot.on('message', (msg)=>{
     return bot.emit('text', { ...msg, text:`/codigo ${p} ${l}` });
   }
 
-  // Flujo por calle → intersecciones (desde /menu)
   if (st.stage === 'wait_main' && st.linea) {
     const lobj = LINES.find(l=>l.linea===st.linea);
     if (!lobj) return bot.sendMessage(chatId, 'No reconozco la línea. Usá /menu');
@@ -548,7 +511,6 @@ bot.on('message', (msg)=>{
     bot.sendMessage(chatId, `Calles que coinciden:${extra}`, kb(rows));
   }
 
-  // Renombrar favorito
   if (st.stage === 'rename_fav' && st.fav) {
     const txt=text.trim();
     STATE.set(chatId, { stage:'idle' });
@@ -565,7 +527,6 @@ bot.on('callback_query', async (q)=>{
   const data=q.data||'';
 
   try{
-    // accesos de /start
     if (data==='menu_lineas'){ bot.answerCallbackQuery(q.id); return showLinesMenu(chatId); }
     if (data==='menu_favs'){   bot.answerCallbackQuery(q.id); return showFavsMenu(chatId); }
     if (data==='menu_buscar'){
@@ -574,7 +535,6 @@ bot.on('callback_query', async (q)=>{
       return bot.sendMessage(chatId, texto, { parse_mode:'Markdown' });
     }
 
-    // /menu → elegir línea
     if (data.startsWith('sel_linea:')){
       const linea=data.split(':')[1];
       STATE.set(chatId, { stage:'wait_main', linea });
@@ -582,7 +542,6 @@ bot.on('callback_query', async (q)=>{
       return askMainStreet(chatId, linea);
     }
 
-    // elegir calle → intersecciones
     if (data.startsWith('sel_calle:')){
       const [, linea, cIdxStr] = data.split(':');
       const cIdx=Number(cIdxStr);
@@ -599,7 +558,6 @@ bot.on('callback_query', async (q)=>{
       return bot.sendMessage(chatId, `Intersecciones de: ${calleObj.descripcion}\n(${lineTitle(linea)})`, kb(rows));
     }
 
-    // elegir intersección → paradas
     if (data.startsWith('sel_inter:')){
       const [, linea, cIdxStr, iIdxStr] = data.split(':');
       const cIdx=Number(cIdxStr), iIdx=Number(iIdxStr);
@@ -614,7 +572,6 @@ bot.on('callback_query', async (q)=>{
       return bot.sendMessage(chatId, `${lineTitle(linea)}\nCalle: ${calleObj.descripcion}\nIntersección: ${interDesc}\n\n${parts}`, stopsKeyboard(paradas, linea));
     }
 
-    // consultar arribos (botón ⏱️)
     if (data.startsWith('arr_q:')){
       const [, parada, linea] = data.split(':');
       bot.answerCallbackQuery(q.id, { text:`Consultando ${parada} ${linea}…` });
@@ -622,14 +579,13 @@ bot.on('callback_query', async (q)=>{
         const stopGeo = findStopGeo(linea, parada);
         const arr = obtenerArribos(parada, linea);
         const text = fmtArribos(arr, { parada, linea, stopGeo });
-        return bot.sendMessage(chatId, text, { parse_mode:'Markdown', ...trackingKeyboardFromArribos(arr, linea, parada) });
+        return bot.sendMessage(chatId, text, { parse_mode:'Markdown', disable_web_page_preview: true, ...trackingKeyboardFromArribos(arr, linea, parada) });
       }catch(e){
         console.error('arr_q error:', e);
         return bot.sendMessage(chatId, `No pude obtener arribos para ${parada} ${linea}.`);
       }
     }
 
-    // favoritos
     if (data.startsWith('fav_add:')){
       const [, parada, linea] = data.split(':');
       const { added } = addFav(chatId, parada, linea);
@@ -645,7 +601,7 @@ bot.on('callback_query', async (q)=>{
         const stopGeo=findStopGeo(linea, parada);
         const arr=obtenerArribos(parada, linea);
         const text=fmtArribos(arr, { parada, linea, stopGeo });
-        return bot.sendMessage(chatId, text, { parse_mode:'Markdown', ...trackingKeyboardFromArribos(arr, linea, parada) });
+        return bot.sendMessage(chatId, text, { parse_mode:'Markdown', disable_web_page_preview: true, ...trackingKeyboardFromArribos(arr, linea, parada) });
       }catch(e){
         console.error('fav_go error:', e);
         return bot.sendMessage(chatId, `No pude obtener arribos para ${parada} ${linea}.`);
@@ -664,7 +620,6 @@ bot.on('callback_query', async (q)=>{
       return showFavsMenu(chatId);
     }
 
-    // autoguiado /codigo: botón elegir línea
     if (data.startsWith('ask_codigo_pickline:')) {
       const [, parada, linea] = data.split(':');
       bot.answerCallbackQuery(q.id, { text: lineTitle(linea) });
@@ -672,7 +627,6 @@ bot.on('callback_query', async (q)=>{
       return bot.emit('text', { ...q.message, text: `/codigo ${parada} ${linea}` });
     }
 
-    // seguimiento start/stop
     if (data.startsWith('trk_start:')){
       const [, linea, parada, interno] = data.split(':');
       bot.answerCallbackQuery(q.id, { text:`Siguiendo coche ${interno}…` });
