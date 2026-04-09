@@ -394,7 +394,7 @@ bot.onText(/^\/start$/, (msg)=>{
     [{ text:'🔎 Buscar por código', callback_data:'menu_buscar' }],
     [{ text:'📖 Ayuda e Instrucciones', callback_data:'menu_ayuda' }]
   ];
-  const texto = `👋 *¡Bienvenido al Bot de Colectivos!*\n\nConsultá arribos en tiempo real, guardá paradas favoritas y seguí a tu colectivo en el mapa.`;
+  const texto = `👋 *¡Bienvenido al Bot de La Nueva Perla by Rodney!*\n\nConsultá arribos en tiempo real y seguí a tu colectivo en el mapa.`;
   bot.sendMessage(chatId, texto, { parse_mode:'Markdown', reply_markup:{ inline_keyboard: menu } });
 });
 
