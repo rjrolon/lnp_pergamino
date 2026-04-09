@@ -246,7 +246,25 @@ function showFavsMenu(chatId){
   if (!favs.length) return bot.sendMessage(chatId,'No tenés favoritos guardados. Tocá ⭐ cuando veas las paradas.');
   bot.sendMessage(chatId, 'Tus favoritos:', listFavsKeyboard(chatId));
 }
-
+function showHelp(chatId) {
+  const texto = `📖 *GUÍA DE USO Y COMANDOS*\n\n` +
+    `*Búsqueda rápida:*\n` +
+    `• /parada [nro] — Arribos de todas las líneas en una parada (ej. \`/parada 0026\`).\n` +
+    `• /codigo [parada] [linea] — Arribos de una sola línea (ej. \`/codigo 0026 329\`).\n` +
+    `• /menu — Buscá paradas navegando por las calles.\n\n` +
+    `*Seguimiento en vivo:*\n` +
+    `• /seguir [parada] [linea] [coche] — Fuerza el seguimiento de un coche específico, ideal si todavía está lejos y no figura en la lista (ej. \`/seguir 0026 329 44\`).\n\n` +
+    `*Tus viajes:*\n` +
+    `• /favs — Muestra tu lista de paradas guardadas con acceso rápido.\n\n` +
+    `*Códigos de Líneas (Ramales):*\n` +
+    `🚌 *329* = Ramal A\n` +
+    `🚌 *330* = Ramal B\n` +
+    `🚌 *331* = Ramal C\n` +
+    `🚌 *332* = Ramal D\n` +
+    `🚌 *333* = Ramal E`;
+  
+  bot.sendMessage(chatId, texto, { parse_mode: 'Markdown' });
+}
 /* ---------------- Seguimiento de coche (lógica con avisos) ---------------- */
 const TRACKERS = new Map(); // key: chatId:linea:interno -> { interval, msgId, startedAt, warnedAutostop, warnedETA5 }
 const tKey = (chatId,linea,interno)=>`${chatId}:${linea}:${interno}`;
@@ -367,19 +385,21 @@ async function stopTracking({ chatId, linea, interno }){
   TRACKERS.delete(key);
 }
 
-/* ---------------- /start ---------------- */
+/* ---------------- /start y /ayuda ---------------- */
 bot.onText(/^\/start$/, (msg)=>{
   const chatId=msg.chat.id;
   const menu = [
     [{ text:'🚌 Ver líneas disponibles', callback_data:'menu_lineas' }],
     [{ text:'⭐ Favoritos', callback_data:'menu_favs' }],
-    [{ text:'🔎 Buscar por código de parada', callback_data:'menu_buscar' }]
+    [{ text:'🔎 Buscar por código', callback_data:'menu_buscar' }],
+    [{ text:'📖 Ayuda e Instrucciones', callback_data:'menu_ayuda' }]
   ];
-  const texto = `👋 *Bienvenido*\n\nConsultá arribos, guardá favoritos o buscá por código.\n\nComandos útiles:\n• /menu — ver líneas\n• /codigo 0063 329 — búsqueda directa\n• /parada 0063 — búsqueda global (todas las líneas)`;
+  const texto = `👋 *¡Bienvenido al Bot de Colectivos!*\n\nConsultá arribos en tiempo real, guardá paradas favoritas y seguí a tu colectivo en el mapa.`;
   bot.sendMessage(chatId, texto, { parse_mode:'Markdown', reply_markup:{ inline_keyboard: menu } });
 });
 
 /* ---------------- /menu & /favs ---------------- */
+bot.onText(/^\/ayuda$/i, (msg)=> showHelp(msg.chat.id));
 bot.onText(/^\/menu$/, (msg)=> showLinesMenu(msg.chat.id));
 bot.onText(/^\/favs|\/favoritos$/i, (msg)=> showFavsMenu(msg.chat.id));
 
@@ -545,6 +565,7 @@ bot.on('callback_query', async (q)=>{
       const texto=`Usá:\n\n• */codigo* 0063 329 — parada + línea\n• */parada* 0063 — global (todas las líneas)`;
       return bot.sendMessage(chatId, texto, { parse_mode:'Markdown' });
     }
+    if (data==='menu_ayuda'){ bot.answerCallbackQuery(q.id); return showHelp(chatId); }
 
     if (data.startsWith('sel_linea:')){
       const linea=data.split(':')[1];
