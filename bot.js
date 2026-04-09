@@ -659,5 +659,26 @@ bot.on('callback_query', async (q)=>{
     try{ await bot.answerCallbackQuery(q.id, { text:'Error', show_alert:true }); }catch{}
   }
 });
+/* ---------------- /seguir — forzar seguimiento manual ---------------- */
+bot.onText(/^\/seguir(?:\s+(\d+)\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
+  const chatId = msg.chat.id;
+  const parada = match[1];
+  const linea = match[2];
+  const interno = match[3];
+
+  if (parada && linea && interno) {
+    // Verificamos si la línea existe
+    LINES = loadLines();
+    const lobj = LINES.find(l => l.linea === String(linea));
+    if (!lobj) return bot.sendMessage(chatId, `❌ La línea ${linea} no existe.`);
+
+    bot.sendMessage(chatId, `📡 *Forzando seguimiento*\nBuscando al Coche ${interno} de la ${lineTitle(linea)} hacia la Parada ${parada}...\n\n_(Si está muy lejos, dirá "Sin datos" hasta que se acerque)_`, { parse_mode: 'Markdown' });
+    await startTracking({ chatId, linea, parada, interno });
+    return;
+  }
+
+  // Si el usuario escribe solo /seguir o le faltan datos, le mostramos la ayuda
+  bot.sendMessage(chatId, 'Para forzar el seguimiento de un coche específico, usá el formato:\n`/seguir [parada] [linea] [coche]`\n\nEjemplo: `/seguir 0063 329 50`', { parse_mode: 'Markdown' });
+});
 
 console.log('[OK] Bot listo: /start /menu /codigo /parada /favs + seguimiento 📡 (autostop 10 min + avisos)');
