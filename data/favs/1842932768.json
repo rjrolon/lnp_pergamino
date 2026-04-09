@@ -1,0 +1,38 @@
+[
+  {
+    "parada": "0026",
+    "linea": "329",
+    "tag": "0026 329",
+    "name": "L A Pueyrredon y 9deJ"
+  },
+  {
+    "parada": "0026",
+    "linea": "330",
+    "tag": "0026 330",
+    "name": "L B Pueyrredon y 9deJ"
+  },
+  {
+    "parada": "0056",
+    "linea": "329",
+    "tag": "0056 329",
+    "name": "Esquina Negra"
+  },
+  {
+    "parada": "0057",
+    "linea": "330",
+    "tag": "0057 330",
+    "name": "L B Agos"
+  },
+  {
+    "parada": "0186",
+    "linea": "331",
+    "tag": "0186 331",
+    "name": "L C Carrefour"
+  },
+  {
+    "parada": "0062",
+    "linea": "330",
+    "tag": "0062 330",
+    "name": null
+  }
+]

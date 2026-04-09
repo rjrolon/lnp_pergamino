@@ -1,0 +1,966 @@
+{
+  "linea": 332,
+  "generado": "2025-11-05T19:00:02.906Z",
+  "calles": [
+    {
+      "codigo": 19346,
+      "descripcion": "9 DE JULIO-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19347,
+          "descripcion": "11 DE SEPTIEMBRE-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0028",
+              "lat": -33.897397,
+              "lon": -60.576606,
+              "maps": "https://www.google.com/maps?q=-33.897397,-60.576606"
+            }
+          ]
+        },
+        {
+          "codigo": 19385,
+          "descripcion": "CASTELLI-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0244",
+              "lat": -33.898919,
+              "lon": -60.577379,
+              "maps": "https://www.google.com/maps?q=-33.898919,-60.577379"
+            }
+          ]
+        },
+        {
+          "codigo": 19298,
+          "descripcion": "LARREA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0245",
+              "lat": -33.90078,
+              "lon": -60.578274,
+              "maps": "https://www.google.com/maps?q=-33.90078,-60.578274"
+            }
+          ]
+        },
+        {
+          "codigo": 19345,
+          "descripcion": "PUEYRREDON-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0026",
+              "lat": -33.893255,
+              "lon": -60.57454,
+              "maps": "https://www.google.com/maps?q=-33.893255,-60.57454"
+            }
+          ]
+        },
+        {
+          "codigo": 19300,
+          "descripcion": "SAN MARTIN-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0027",
+              "lat": -33.895607,
+              "lon": -60.575704,
+              "maps": "https://www.google.com/maps?q=-33.895607,-60.575704"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22812,
+      "descripcion": "AV CHAMPAGNAT-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 22799,
+          "descripcion": "BV AMEGHINO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0234",
+              "lat": -33.867227,
+              "lon": -60.569259,
+              "maps": "https://www.google.com/maps?q=-33.867227,-60.569259"
+            }
+          ]
+        },
+        {
+          "codigo": 19993,
+          "descripcion": "CALE 108-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0233",
+              "lat": -33.865824,
+              "lon": -60.571077,
+              "maps": "https://www.google.com/maps?q=-33.865824,-60.571077"
+            }
+          ]
+        },
+        {
+          "codigo": 19991,
+          "descripcion": "CALLE 104-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0232",
+              "lat": -33.864185,
+              "lon": -60.573213,
+              "maps": "https://www.google.com/maps?q=-33.864185,-60.573213"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19412,
+      "descripcion": "AV DE MAYO-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 22634,
+          "descripcion": "BV COLON.-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0023",
+              "lat": -33.890528,
+              "lon": -60.57993,
+              "maps": "https://www.google.com/maps?q=-33.890528,-60.57993"
+            }
+          ]
+        },
+        {
+          "codigo": 19305,
+          "descripcion": "ITALIA.-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0025",
+              "lat": -33.891997,
+              "lon": -60.57551,
+              "maps": "https://www.google.com/maps?q=-33.891997,-60.57551"
+            }
+          ]
+        },
+        {
+          "codigo": 19410,
+          "descripcion": "PLAZA 25 DE MAYO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0064",
+              "lat": -33.892068,
+              "lon": -60.575137,
+              "maps": "https://www.google.com/maps?q=-33.892068,-60.575137"
+            }
+          ]
+        },
+        {
+          "codigo": 19304,
+          "descripcion": "RIVADAVIA..-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0024",
+              "lat": -33.891307,
+              "lon": -60.577575,
+              "maps": "https://www.google.com/maps?q=-33.891307,-60.577575"
+            }
+          ]
+        },
+        {
+          "codigo": 19283,
+          "descripcion": "RIVADAVIA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0065",
+              "lat": -33.891271,
+              "lon": -60.577475,
+              "maps": "https://www.google.com/maps?q=-33.891271,-60.577475"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22685,
+      "descripcion": "AV J B JUSTO-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19286,
+          "descripcion": "SABINO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0246",
+              "lat": -33.912265,
+              "lon": -60.583183,
+              "maps": "https://www.google.com/maps?q=-33.912265,-60.583183"
+            }
+          ]
+        },
+        {
+          "codigo": 19414,
+          "descripcion": "VELA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0247",
+              "lat": -33.91389,
+              "lon": -60.584921,
+              "maps": "https://www.google.com/maps?q=-33.91389,-60.584921"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22794,
+      "descripcion": "AV J B. JUSTO-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19446,
+          "descripcion": "BALBOA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0147",
+              "lat": -33.907173,
+              "lon": -60.580633,
+              "maps": "https://www.google.com/maps?q=-33.907173,-60.580633"
+            }
+          ]
+        },
+        {
+          "codigo": 19703,
+          "descripcion": "BV LINIERS-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0210",
+              "lat": -33.910975,
+              "lon": -60.582371,
+              "maps": "https://www.google.com/maps?q=-33.910975,-60.582371"
+            }
+          ]
+        },
+        {
+          "codigo": 19952,
+          "descripcion": "GABOTO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0213",
+              "lat": -33.903543,
+              "lon": -60.578849,
+              "maps": "https://www.google.com/maps?q=-33.903543,-60.578849"
+            }
+          ]
+        },
+        {
+          "codigo": 19508,
+          "descripcion": "SOLIS-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0148",
+              "lat": -33.9091,
+              "lon": -60.58155,
+              "maps": "https://www.google.com/maps?q=-33.9091,-60.58155"
+            },
+            {
+              "identificador": "0211",
+              "lat": -33.909283,
+              "lon": -60.581609,
+              "maps": "https://www.google.com/maps?q=-33.909283,-60.581609"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22698,
+      "descripcion": "AV JUAN B. JUSTO-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19703,
+          "descripcion": "BV LINIERS-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0149",
+              "lat": -33.911442,
+              "lon": -60.582607,
+              "maps": "https://www.google.com/maps?q=-33.911442,-60.582607"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22798,
+      "descripcion": "AVJ B. JUSTO-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19438,
+          "descripcion": "MONRROE-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0212",
+              "lat": -33.905491,
+              "lon": -60.579785,
+              "maps": "https://www.google.com/maps?q=-33.905491,-60.579785"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19986,
+      "descripcion": "BV ALMAFUERTE-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19984,
+          "descripcion": "ARNOLD-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0227",
+              "lat": -33.871233,
+              "lon": -60.577597,
+              "maps": "https://www.google.com/maps?q=-33.871233,-60.577597"
+            }
+          ]
+        },
+        {
+          "codigo": 19475,
+          "descripcion": "BARBAZAN-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0225",
+              "lat": -33.874271,
+              "lon": -60.579024,
+              "maps": "https://www.google.com/maps?q=-33.874271,-60.579024"
+            }
+          ]
+        },
+        {
+          "codigo": 19983,
+          "descripcion": "CALLE H-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0226",
+              "lat": -33.873322,
+              "lon": -60.578589,
+              "maps": "https://www.google.com/maps?q=-33.873322,-60.578589"
+            }
+          ]
+        },
+        {
+          "codigo": 19988,
+          "descripcion": "CEPEDA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0230",
+              "lat": -33.865989,
+              "lon": -60.575033,
+              "maps": "https://www.google.com/maps?q=-33.865989,-60.575033"
+            }
+          ]
+        },
+        {
+          "codigo": 19477,
+          "descripcion": "IRLANDA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0224",
+              "lat": -33.877216,
+              "lon": -60.580443,
+              "maps": "https://www.google.com/maps?q=-33.877216,-60.580443"
+            }
+          ]
+        },
+        {
+          "codigo": 19987,
+          "descripcion": "PEÑALOZA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0229",
+              "lat": -33.86827,
+              "lon": -60.576149,
+              "maps": "https://www.google.com/maps?q=-33.86827,-60.576149"
+            }
+          ]
+        },
+        {
+          "codigo": 19985,
+          "descripcion": "SABIO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0228",
+              "lat": -33.869786,
+              "lon": -60.576857,
+              "maps": "https://www.google.com/maps?q=-33.869786,-60.576857"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22799,
+      "descripcion": "BV AMEGHINO-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19475,
+          "descripcion": "BARBAZAN-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0239",
+              "lat": -33.875946,
+              "lon": -60.573207,
+              "maps": "https://www.google.com/maps?q=-33.875946,-60.573207"
+            }
+          ]
+        },
+        {
+          "codigo": 22688,
+          "descripcion": "BV ALSINA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0243",
+              "lat": -33.886779,
+              "lon": -60.578421,
+              "maps": "https://www.google.com/maps?q=-33.886779,-60.578421"
+            }
+          ]
+        },
+        {
+          "codigo": 22801,
+          "descripcion": "BV PARAGUAY.-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0242",
+              "lat": -33.880457,
+              "lon": -60.575374,
+              "maps": "https://www.google.com/maps?q=-33.880457,-60.575374"
+            }
+          ]
+        },
+        {
+          "codigo": 19988,
+          "descripcion": "CEPEDA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0235",
+              "lat": -33.868546,
+              "lon": -60.569677,
+              "maps": "https://www.google.com/maps?q=-33.868546,-60.569677"
+            }
+          ]
+        },
+        {
+          "codigo": 19954,
+          "descripcion": "ESPAÑA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0217",
+              "lat": -33.885454,
+              "lon": -60.577693,
+              "maps": "https://www.google.com/maps?q=-33.885454,-60.577693"
+            }
+          ]
+        },
+        {
+          "codigo": 19477,
+          "descripcion": "IRLANDA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0241",
+              "lat": -33.878992,
+              "lon": -60.574677,
+              "maps": "https://www.google.com/maps?q=-33.878992,-60.574677"
+            }
+          ]
+        },
+        {
+          "codigo": 19987,
+          "descripcion": "PEÑALOZA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0236",
+              "lat": -33.869784,
+              "lon": -60.570219,
+              "maps": "https://www.google.com/maps?q=-33.869784,-60.570219"
+            }
+          ]
+        },
+        {
+          "codigo": 19483,
+          "descripcion": "R JOHN-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0240",
+              "lat": -33.877446,
+              "lon": -60.57391,
+              "maps": "https://www.google.com/maps?q=-33.877446,-60.57391"
+            }
+          ]
+        },
+        {
+          "codigo": 19489,
+          "descripcion": "R RAIMUNDO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0219",
+              "lat": -33.882339,
+              "lon": -60.576162,
+              "maps": "https://www.google.com/maps?q=-33.882339,-60.576162"
+            }
+          ]
+        },
+        {
+          "codigo": 19995,
+          "descripcion": "RICHIERI-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0238",
+              "lat": -33.873621,
+              "lon": -60.572113,
+              "maps": "https://www.google.com/maps?q=-33.873621,-60.572113"
+            }
+          ]
+        },
+        {
+          "codigo": 19985,
+          "descripcion": "SABIO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0237",
+              "lat": -33.871414,
+              "lon": -60.571024,
+              "maps": "https://www.google.com/maps?q=-33.871414,-60.571024"
+            }
+          ]
+        },
+        {
+          "codigo": 19491,
+          "descripcion": "SAN LORENZO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0218",
+              "lat": -33.883889,
+              "lon": -60.57695,
+              "maps": "https://www.google.com/maps?q=-33.883889,-60.57695"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22633,
+      "descripcion": "BV COLON-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19504,
+          "descripcion": "PINTO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0142",
+              "lat": -33.889263,
+              "lon": -60.579623,
+              "maps": "https://www.google.com/maps?q=-33.889263,-60.579623"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22632,
+      "descripcion": "BV COLÓN-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 22688,
+          "descripcion": "BV ALSINA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0216",
+              "lat": -33.887093,
+              "lon": -60.57852,
+              "maps": "https://www.google.com/maps?q=-33.887093,-60.57852"
+            }
+          ]
+        },
+        {
+          "codigo": 19953,
+          "descripcion": "PLAZA SAN JOSE-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0215",
+              "lat": -33.889921,
+              "lon": -60.579871,
+              "maps": "https://www.google.com/maps?q=-33.889921,-60.579871"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19703,
+      "descripcion": "BV LINIERS-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19413,
+          "descripcion": "HOSTPITAL-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0069",
+              "lat": -33.910373,
+              "lon": -60.585887,
+              "maps": "https://www.google.com/maps?q=-33.910373,-60.585887"
+            }
+          ]
+        },
+        {
+          "codigo": 19291,
+          "descripcion": "ILLA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0013",
+              "lat": -33.90918,
+              "lon": -60.588846,
+              "maps": "https://www.google.com/maps?q=-33.90918,-60.588846"
+            }
+          ]
+        },
+        {
+          "codigo": 19285,
+          "descripcion": "ITALIA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0209",
+              "lat": -33.910622,
+              "lon": -60.584514,
+              "maps": "https://www.google.com/maps?q=-33.910622,-60.584514"
+            }
+          ]
+        },
+        {
+          "codigo": 19290,
+          "descripcion": "RIVADAVIA.-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0012",
+              "lat": -33.909857,
+              "lon": -60.586871,
+              "maps": "https://www.google.com/maps?q=-33.909857,-60.586871"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22694,
+      "descripcion": "BV PARAGUAY-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19986,
+          "descripcion": "BV ALMAFUERTE-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0223",
+              "lat": -33.878698,
+              "lon": -60.580992,
+              "maps": "https://www.google.com/maps?q=-33.878698,-60.580992"
+            }
+          ]
+        },
+        {
+          "codigo": 22799,
+          "descripcion": "BV AMEGHINO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0220",
+              "lat": -33.880465,
+              "lon": -60.575605,
+              "maps": "https://www.google.com/maps?q=-33.880465,-60.575605"
+            }
+          ]
+        },
+        {
+          "codigo": 22800,
+          "descripcion": "CTO SILVA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0221",
+              "lat": -33.879979,
+              "lon": -60.577173,
+              "maps": "https://www.google.com/maps?q=-33.879979,-60.577173"
+            }
+          ]
+        },
+        {
+          "codigo": 19980,
+          "descripcion": "SANTA CRUZ-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0222",
+              "lat": -33.879329,
+              "lon": -60.579051,
+              "maps": "https://www.google.com/maps?q=-33.879329,-60.579051"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 22795,
+      "descripcion": "CALLE A CONDARCO-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19881,
+          "descripcion": "ANDRADE-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0201",
+              "lat": -33.915067,
+              "lon": -60.565365,
+              "maps": "https://www.google.com/maps?q=-33.915067,-60.565365"
+            }
+          ]
+        },
+        {
+          "codigo": 19882,
+          "descripcion": "COLECTORA.-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0202",
+              "lat": -33.913799,
+              "lon": -60.567651,
+              "maps": "https://www.google.com/maps?q=-33.913799,-60.567651"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19877,
+      "descripcion": "COLECTORA-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19876,
+          "descripcion": "SAN JUAN BOSCO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0197",
+              "lat": -33.914697,
+              "lon": -60.568719,
+              "maps": "https://www.google.com/maps?q=-33.914697,-60.568719"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19284,
+      "descripcion": "FULLANA-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 22797,
+          "descripcion": "AV ILLA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0208",
+              "lat": -33.911281,
+              "lon": -60.589793,
+              "maps": "https://www.google.com/maps?q=-33.911281,-60.589793"
+            }
+          ]
+        },
+        {
+          "codigo": 19280,
+          "descripcion": "MONTEAGUDO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0072",
+              "lat": -33.911642,
+              "lon": -60.588655,
+              "maps": "https://www.google.com/maps?q=-33.911642,-60.588655"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19285,
+      "descripcion": "ITALIA-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19884,
+          "descripcion": "RUTA Nº 8-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0207",
+              "lat": -33.91456,
+              "lon": -60.586101,
+              "maps": "https://www.google.com/maps?q=-33.91456,-60.586101"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19388,
+      "descripcion": "MERCED-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19505,
+          "descripcion": "3 DE FEBRERO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0214",
+              "lat": -33.90052,
+              "lon": -60.577288,
+              "maps": "https://www.google.com/maps?q=-33.90052,-60.577288"
+            }
+          ]
+        },
+        {
+          "codigo": 19299,
+          "descripcion": "GRAL PAZ-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0061",
+              "lat": -33.898759,
+              "lon": -60.576324,
+              "maps": "https://www.google.com/maps?q=-33.898759,-60.576324"
+            }
+          ]
+        },
+        {
+          "codigo": 19409,
+          "descripcion": "PUYRREDON-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0063",
+              "lat": -33.893417,
+              "lon": -60.573849,
+              "maps": "https://www.google.com/maps?q=-33.893417,-60.573849"
+            }
+          ]
+        },
+        {
+          "codigo": 19300,
+          "descripcion": "SAN MARTIN-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0062",
+              "lat": -33.89608,
+              "lon": -60.574949,
+              "maps": "https://www.google.com/maps?q=-33.89608,-60.574949"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19283,
+      "descripcion": "RIVADAVIA-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19282,
+          "descripcion": "TERMINAL-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0007",
+              "lat": -33.913329,
+              "lon": -60.587338,
+              "maps": "https://www.google.com/maps?q=-33.913329,-60.587338"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19884,
+      "descripcion": "RUTA Nº 8-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19387,
+          "descripcion": "25 DE MAYO-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0205",
+              "lat": -33.91448,
+              "lon": -60.579986,
+              "maps": "https://www.google.com/maps?q=-33.91448,-60.579986"
+            }
+          ]
+        },
+        {
+          "codigo": 19441,
+          "descripcion": "ALVEAR-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0206",
+              "lat": -33.914556,
+              "lon": -60.582105,
+              "maps": "https://www.google.com/maps?q=-33.914556,-60.582105"
+            }
+          ]
+        },
+        {
+          "codigo": 22802,
+          "descripcion": "AV C PELLEGRINI-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0248",
+              "lat": -33.914709,
+              "lon": -60.584498,
+              "maps": "https://www.google.com/maps?q=-33.914709,-60.584498"
+            }
+          ]
+        },
+        {
+          "codigo": 19499,
+          "descripcion": "AZCUENAGA-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0204",
+              "lat": -33.914204,
+              "lon": -60.574845,
+              "maps": "https://www.google.com/maps?q=-33.914204,-60.574845"
+            }
+          ]
+        },
+        {
+          "codigo": 22796,
+          "descripcion": "PRES PERON-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0203",
+              "lat": -33.914022,
+              "lon": -60.570698,
+              "maps": "https://www.google.com/maps?q=-33.914022,-60.570698"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": 19876,
+      "descripcion": "SAN JUAN BOSCO-PERGAMINO",
+      "intersecciones": [
+        {
+          "codigo": 19881,
+          "descripcion": "ANDRADE-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0199",
+              "lat": -33.916066,
+              "lon": -60.566147,
+              "maps": "https://www.google.com/maps?q=-33.916066,-60.566147"
+            }
+          ]
+        },
+        {
+          "codigo": 19878,
+          "descripcion": "GALVEZ-PERGAMINO",
+          "paradas": [
+            {
+              "identificador": "0198",
+              "lat": -33.915539,
+              "lon": -60.567103,
+              "maps": "https://www.google.com/maps?q=-33.915539,-60.567103"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
