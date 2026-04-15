@@ -3,15 +3,13 @@
  *
  * Puente entre el bot y tu flujo real:
  * - Toma --parada y --linea
- * - Clona y rellena un XML temporal desde PAYLOAD_TEMPLATE (.env)
- * - Ejecuta tu PowerShell PS_SCRIPT para generar un JSON
+ * - Arma un XML con los parámetros
+ * - Consulta a la API de SmartMovePro (Efisat)
  * - Normaliza ese JSON a {arribos:[], vehiculos:[]}
  *
  * Uso:
- *    node scripts/arribos_cli.js --parada 0063 --linea 329
+ * node scripts/arribos_cli.js --parada 0063 --linea 329
  */
-
-const fs = require('fs');
 
 // 1. Leer argumentos de la consola
 function parseArgs() {
@@ -50,7 +48,6 @@ const xmlBody = `<?xml version="1.0" encoding="utf-8"?>
 // 3. Consultar la API directamente desde Node
 async function fetchArribos() {
   try {
-    // Nota: fetch nativo requiere Node.js v18 o superior
     const res = await fetch('http://clswbsas.smartmovepro.net/ModuloParadas/SWParadas.asmx', {
       method: 'POST',
       headers: {
@@ -87,15 +84,27 @@ async function fetchArribos() {
         const minutos = toMinutes(a.Arribo);
         const lat = a.Latitud != null ? Number(a.Latitud) : null;
         const lon = a.Longitud != null ? Number(a.Longitud) : null;
+        
+        // --- NUEVOS DATOS EXTRAÍDOS DE LA API ---
+        const esAdaptado = a.EsAdaptado === "True";
+        const chofer = a.IdentificadorChofer || null;
+        const desvio = a.DesvioHorario || null;
+
         return {
           minutos,
           hora: a.Arribo || null,
           ramal: a.DescripcionLinea || null,
           destino: a.DescripcionBandera || null,
           interno: a.IdentificadorCoche || null,
-          lat, lon,
+          lat, 
+          lon,
           actualizado: a.UltimaFechaHoraGPS || null,
-          vehiculo_maps: (lat!=null && lon!=null) ? `https://www.google.com/maps?q=${lat},${lon}` : null
+          vehiculo_maps: (lat!=null && lon!=null) ? `https://www.google.com/maps?q=${lat},${lon}` : null,
+          
+          // Guardamos las joyas nuevas para que el bot las pueda usar
+          adaptado: esAdaptado,
+          chofer: chofer,
+          desvio: desvio
         };
       });
 
@@ -104,9 +113,11 @@ async function fetchArribos() {
           return {
             interno: v.IdentificadorCoche || null,
             ramal: v.DescripcionLinea || null,
-            lat, lon,
+            lat, 
+            lon,
             actualizado: v.UltimaFechaHoraGPS || null,
-            maps: `https://www.google.com/maps?q=${lat},${lon}`
+            maps: `https://www.google.com/maps?q=${lat},${lon}`,
+            adaptado: v.EsAdaptado === "True"
           };
       });
 
