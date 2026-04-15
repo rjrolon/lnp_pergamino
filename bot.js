@@ -171,7 +171,6 @@ function fmtArribos(arr, { parada, linea, stopGeo=null }){
   const stopLine = getStopLineStr(parada, stopGeo);
   if (!arr.length) return `🚌 *${lineTitle(linea)}*\n${stopLine}\n\n_No hay arribos disponibles._`;
 
-  // NUEVO: Ordenar para que "Arribando.." quede primero siempre
   arr.sort((a, b) => {
     const minA = (a.hora && a.hora.toLowerCase().includes('arribando')) ? 0 : ((a.minutos != null && a.minutos < 900) ? a.minutos : 9999);
     const minB = (b.hora && b.hora.toLowerCase().includes('arribando')) ? 0 : ((b.minutos != null && b.minutos < 900) ? b.minutos : 9999);
@@ -179,22 +178,29 @@ function fmtArribos(arr, { parada, linea, stopGeo=null }){
   });
 
   const now = new Date();
-  // ... el resto de la función sigue igual (const lines = arr.map...)
   const lines = arr.map(a=>{
     const realMin = (a.minutos != null && a.minutos < 900) ? a.minutos : null;
     const eta = (realMin != null) ? fmtTimeHHMM(new Date(now.getTime() + realMin*60000)) : null;
     const minTxt = (realMin != null) ? `${realMin} min` : (a.hora || '—');
     
-    const ramal=a.ramal?` · ${a.ramal}`:'';
-    const dest=a.destino?` → ${a.destino}`:'';
-    const coche=a.interno?` · Coche ${a.interno}`:'';
+    const ramal = a.ramal ? ` · ${a.ramal}` : '';
+    const dest = a.destino ? ` → ${a.destino}` : '';
+    
+    // Icono ♿ si viene adaptado
+    const iconoAdaptado = a.adaptado ? ' ♿' : '';
+    const coche = a.interno ? ` · Coche ${a.interno}${iconoAdaptado}` : '';
     
     const ubicacion = (a.lat && a.lon) ? getCalleAproximada(a.lat, a.lon) : null;
     const ubicacionTxt = ubicacion ? `\n   📍 Aprox: ${ubicacion}` : '';
-    const vmap = a.vehiculo_maps ? `\n   🗺️ Link: ${a.vehiculo_maps}` : '';
     
-    const etaTxt=eta?` · ETA ${eta}`:'';
-    return `• ${minTxt}${etaTxt}${ramal}${dest}${coche}${ubicacionTxt}${vmap}`;
+    // Info del Chofer y Desvío
+    const choferTxt = a.chofer ? `\n   👨‍✈️ Chofer: ${a.chofer}` : '';
+    const desvioTxt = a.desvio ? `\n   ⏱️ Desvío: ${a.desvio}` : '';
+    
+    const vmap = a.vehiculo_maps ? `\n   🗺️ Link: ${a.vehiculo_maps}` : '';
+    const etaTxt = eta ? ` · ETA ${eta}` : '';
+    
+    return `• ${minTxt}${etaTxt}${ramal}${dest}${coche}${ubicacionTxt}${choferTxt}${desvioTxt}${vmap}`;
   });
   return `🚌 *${lineTitle(linea)}*\n${stopLine}\n\n`+lines.join('\n  ───────────────\n');
 }
@@ -224,7 +230,7 @@ function trackingStopKeyboard(linea, parada, interno){
 }
 
 /* ---------------- Estado conversacional ---------------- */
-const STATE = new Map(); // chatId -> { stage, ... }
+const STATE = new Map();
 
 /* ---------------- Helpers de UI ---------------- */
 function askMainStreet(chatId, linea){
@@ -253,7 +259,7 @@ function showHelp(chatId) {
     `• /codigo [parada] [linea] — Arribos de una sola línea (ej. \`/codigo 0064 329\`).\n` +
     `• /menu — Buscá paradas navegando por las calles.\n\n` +
     `*Seguimiento en vivo:*\n` +
-    `• /seguir [parada] [linea] [coche] — Fuerza el seguimiento de un coche específico (ej. \`/seguir 0064 329 50\`).\n\n` +
+    `• /seguir [parada] [linea] [coche] — Fuerza seguimiento de un coche (ej. \`/seguir 0064 329 50\`).\n\n` +
     `*Tus viajes:*\n` +
     `• /favs — Muestra tu lista de paradas guardadas.\n\n` +
     `📍 *PARADAS CLAVES:*\n` +
@@ -271,8 +277,9 @@ function showHelp(chatId) {
   
   bot.sendMessage(chatId, texto, { parse_mode: 'Markdown' });
 }
+
 /* ---------------- Seguimiento de coche (lógica con avisos) ---------------- */
-const TRACKERS = new Map(); // key: chatId:linea:interno -> { interval, msgId, startedAt, warnedAutostop, warnedETA5 }
+const TRACKERS = new Map();
 const tKey = (chatId,linea,interno)=>`${chatId}:${linea}:${interno}`;
 
 function buildTrackText({ linea, parada, stopGeo, coche }){
@@ -287,19 +294,20 @@ function buildTrackText({ linea, parada, stopGeo, coche }){
   const ramal = coche.ramal ? ` · ${coche.ramal}` : '';
   const dest = coche.destino ? ` → ${coche.destino}` : '';
   
+  const iconoAdaptado = coche.adaptado ? ' ♿' : '';
+  
   const ubicacion = (coche.lat && coche.lon) ? getCalleAproximada(coche.lat, coche.lon) : null;
   const ubicacionTxt = ubicacion ? `\n📍 Aprox: ${ubicacion}` : '';
   const vmap = coche.vehiculo_maps ? `\n🗺️ Link: ${coche.vehiculo_maps}` : (coche.lat!=null&&coche.lon!=null ? `\n🗺️ Link: https://www.google.com/maps?q=${coche.lat},${coche.lon}` : '');
   
-  const upd = coche.actualizado ? `\n⏱️ ${coche.actualizado}` : '';
+  const upd = coche.actualizado ? `\n⏱️ GPS: ${coche.actualizado}` : '';
   const etaTxt = eta ? ` · ETA ${eta}` : '';
   
-  return `${title}\n${stopLine}\n\n• ${minTxt}${etaTxt}${ramal}${dest}\nCoche ${coche.interno}${ubicacionTxt}${vmap}${upd}`;
+  return `${title}\n${stopLine}\n\n• ${minTxt}${etaTxt}${ramal}${dest}\nCoche ${coche.interno}${iconoAdaptado}${ubicacionTxt}${vmap}${upd}`;
 }
 
 async function startTracking({ chatId, linea, parada, interno }){
   await stopTracking({ chatId, linea, interno });
-
   const stopGeo = findStopGeo(linea, parada);
 
   const refresh = async (first=false, msgId=null)=>{
@@ -356,9 +364,7 @@ async function startTracking({ chatId, linea, parada, interno }){
 
       if (!t.warnedAutostop && timeLeft <= 2 * 60 * 1000) {
         t.warnedAutostop = true;
-        try {
-          await bot.sendMessage(chatId, `⏳ En *2 minutos* se detiene el seguimiento de *${lineTitle(linea)} — Coche ${interno}*.`, { parse_mode:'Markdown' });
-        } catch {}
+        try { await bot.sendMessage(chatId, `⏳ En *2 minutos* se detiene el seguimiento de *${lineTitle(linea)} — Coche ${interno}*.`, { parse_mode:'Markdown' }); } catch {}
       }
 
       const { id: msgId, coche } = await (async () => {
@@ -371,9 +377,7 @@ async function startTracking({ chatId, linea, parada, interno }){
 
       if (coche && coche.minutos != null && coche.minutos <= 5 && !cur.warnedETA5) {
         cur.warnedETA5 = true;
-        try {
-          await bot.sendMessage(chatId, `🚏 *Arribo en ≤ 5 minutos* — ${lineTitle(linea)} · Coche ${interno}`, { parse_mode:'Markdown' });
-        } catch {}
+        try { await bot.sendMessage(chatId, `🚏 *Arribo en ≤ 5 minutos* — ${lineTitle(linea)} · Coche ${interno}`, { parse_mode:'Markdown' }); } catch {}
       }
 
     }catch{}
@@ -404,7 +408,6 @@ bot.onText(/^\/start$/, (msg)=>{
   bot.sendMessage(chatId, texto, { parse_mode:'Markdown', reply_markup:{ inline_keyboard: menu } });
 });
 
-/* ---------------- /menu & /favs ---------------- */
 bot.onText(/^\/ayuda$/i, (msg)=> showHelp(msg.chat.id));
 bot.onText(/^\/menu$/, (msg)=> showLinesMenu(msg.chat.id));
 bot.onText(/^\/favs|\/favoritos$/i, (msg)=> showFavsMenu(msg.chat.id));
@@ -457,7 +460,7 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
       for (const a of arr) {
         let sortMin = 9999;
         if (a.hora && a.hora.toLowerCase().includes('arribando')) {
-          sortMin = 0; // Prioridad máxima a los que están llegando
+          sortMin = 0;
         } else if (a.minutos != null && a.minutos < 900) {
           sortMin = a.minutos;
         }
@@ -475,16 +478,24 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
     const eta = (realMin != null) ? fmtTimeHHMM(new Date(now.getTime() + realMin*60000)) : '';
     const minTxt = (realMin != null) ? `${realMin} min` : (a.hora || '—');
     
-    const coche=a.interno?` · Coche ${a.interno}`:'';
-    const ramal=a.ramal?` · ${a.ramal}`:'';
-    const dest=a.destino?` → ${a.destino}`:'';
-    const etaTxt=eta?` · ETA ${eta}`:'';
+    const ramal = a.ramal ? ` · ${a.ramal}` : '';
+    const dest = a.destino ? ` → ${a.destino}` : '';
+    
+    // Icono ♿ si viene adaptado
+    const iconoAdaptado = a.adaptado ? ' ♿' : '';
+    const coche = a.interno ? ` · Coche ${a.interno}${iconoAdaptado}` : '';
     
     const ubicacion = (a.lat && a.lon) ? getCalleAproximada(a.lat, a.lon) : null;
     const ubicacionTxt = ubicacion ? `\n   📍 Aprox: ${ubicacion}` : '';
-    const vmap = a.vehiculo_maps ? `\n   🗺️ Link: ${a.vehiculo_maps}` : '';
     
-    return `• ${minTxt}${etaTxt}${ramal}${dest}${coche} (${lineTitle(a.linea)})${ubicacionTxt}${vmap}`;
+    // Info del Chofer y Desvío
+    const choferTxt = a.chofer ? `\n   👨‍✈️ Chofer: ${a.chofer}` : '';
+    const desvioTxt = a.desvio ? `\n   ⏱️ Desvío: ${a.desvio}` : '';
+    
+    const vmap = a.vehiculo_maps ? `\n   🗺️ Link: ${a.vehiculo_maps}` : '';
+    const etaTxt = eta ? ` · ETA ${eta}` : '';
+    
+    return `• ${minTxt}${etaTxt}${ramal}${dest}${coche} (${lineTitle(a.linea)})${ubicacionTxt}${choferTxt}${desvioTxt}${vmap}`;
   }).join('\n  ───────────────\n');
 
   const trkRows=[]; 
@@ -686,6 +697,7 @@ bot.on('callback_query', async (q)=>{
     try{ await bot.answerCallbackQuery(q.id, { text:'Error', show_alert:true }); }catch{}
   }
 });
+
 /* ---------------- /seguir — forzar seguimiento manual ---------------- */
 bot.onText(/^\/seguir(?:\s+(\d+)\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
   const chatId = msg.chat.id;
@@ -694,7 +706,6 @@ bot.onText(/^\/seguir(?:\s+(\d+)\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
   const interno = match[3];
 
   if (parada && linea && interno) {
-    // Verificamos si la línea existe
     LINES = loadLines();
     const lobj = LINES.find(l => l.linea === String(linea));
     if (!lobj) return bot.sendMessage(chatId, `❌ La línea ${linea} no existe.`);
@@ -704,7 +715,6 @@ bot.onText(/^\/seguir(?:\s+(\d+)\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
     return;
   }
 
-  // Si el usuario escribe solo /seguir o le faltan datos, le mostramos la ayuda
   bot.sendMessage(chatId, 'Para forzar el seguimiento de un coche específico, usá el formato:\n`/seguir [parada] [linea] [coche]`\n\nEjemplo: `/seguir 0063 329 50`', { parse_mode: 'Markdown' });
 });
 
