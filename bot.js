@@ -34,6 +34,30 @@ const FAV_DIR  = path.join(DATA_DIR, 'favs');
 if (!fs.existsSync(FAV_DIR)) fs.mkdirSync(FAV_DIR, { recursive: true });
 const MAX_BTNS = 10;
 
+/* ---------------- Lógica de Whitelist / Admin ---------------- */
+const ADMIN_ID = Number(process.env.ADMIN_ID) || 0;
+const WL_FILE = path.join(DATA_DIR, 'whitelist.json');
+
+// Si no existe el archivo de whitelist, lo creamos vacío
+if (!fs.existsSync(WL_FILE)) fs.writeFileSync(WL_FILE, JSON.stringify([]));
+
+function loadWhitelist() { 
+  try { return JSON.parse(fs.readFileSync(WL_FILE, 'utf8')); } catch { return []; } 
+}
+function saveWhitelist(wl) { 
+  fs.writeFileSync(WL_FILE, JSON.stringify(wl, null, 2)); 
+}
+function isAuthorized(chatId) {
+  if (chatId === ADMIN_ID) return true; // El admin siempre tiene permiso
+  const wl = loadWhitelist();
+  return wl.includes(chatId);
+}
+
+/* ---------------- Alias de líneas/ramales ---------------- */
+// ... (acá sigue const LINE_NAMES = { "329":"Ramal A" ... etc)
+
+// ... (siguen las funciones loadWhitelist, etc.)
+// const DATA_DIR = path.join(__dirname, 'data');
 /* ---------------- Alias de líneas/ramales ---------------- */
 const LINE_NAMES = { "329":"Ramal A", "330":"Ramal B", "331":"Ramal C", "332":"Ramal D", "333":"Ramal E" };
 const lineTitle = (linea) => LINE_NAMES[linea] || `Línea ${linea}`;
@@ -396,8 +420,18 @@ async function stopTracking({ chatId, linea, interno }){
 }
 
 /* ---------------- /start y /ayuda ---------------- */
+/* ---------------- /start y /ayuda ---------------- */
 bot.onText(/^\/start$/, (msg)=>{
-  const chatId=msg.chat.id;
+  const chatId = msg.chat.id;
+  
+  // VERIFICACIÓN DE PATENTE (WHITELIST)
+  if (!isAuthorized(chatId)) {
+    const txt = `⛔ *Bot Privado*\n\nHola ${msg.from.first_name || 'usuario'}. Este bot de colectivos está en fase de pruebas (beta privada) para evitar saturar el sistema.\n\n¿Querés pedirle autorización al administrador (Rodney) para usarlo?`;
+    const btn = [[{ text: '🙋‍♂️ Solicitar Acceso', callback_data: `req_access:${chatId}:${msg.from.first_name || 'SinNombre'}` }]];
+    return bot.sendMessage(chatId, txt, { parse_mode:'Markdown', reply_markup: { inline_keyboard: btn } });
+  }
+
+  // SI ESTÁ AUTORIZADO, SE MUESTRA EL MENÚ NORMAL
   const menu = [
     [{ text:'🚌 Ver líneas disponibles', callback_data:'menu_lineas' }],
     [{ text:'⭐ Favoritos', callback_data:'menu_favs' }],
@@ -408,13 +442,26 @@ bot.onText(/^\/start$/, (msg)=>{
   bot.sendMessage(chatId, texto, { parse_mode:'Markdown', reply_markup:{ inline_keyboard: menu } });
 });
 
-bot.onText(/^\/ayuda$/i, (msg)=> showHelp(msg.chat.id));
-bot.onText(/^\/menu$/, (msg)=> showLinesMenu(msg.chat.id));
-bot.onText(/^\/favs|\/favoritos$/i, (msg)=> showFavsMenu(msg.chat.id));
+bot.onText(/^\/ayuda$/i, (msg) => {
+  if (!isAuthorized(msg.chat.id)) return;
+  showHelp(msg.chat.id);
+});
 
+bot.onText(/^\/menu$/, (msg) => {
+  if (!isAuthorized(msg.chat.id)) return;
+  showLinesMenu(msg.chat.id);
+});
+
+bot.onText(/^\/favs|\/favoritos$/i, (msg) => {
+  if (!isAuthorized(msg.chat.id)) return;
+  showFavsMenu(msg.chat.id);
+});
 /* ---------------- /codigo — directo o autoguiado ---------------- */
 bot.onText(/^\/codigo(?:\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
+  if (!isAuthorized(msg.chat.id)) return; // ¡Acá va el candado!
+  
   const chatId=msg.chat.id;
+  // ... el resto del código sigue igual ...
   const p=match[1], l=match[2];
 
   if (p && l) {
@@ -435,6 +482,7 @@ bot.onText(/^\/codigo(?:\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
 
 /* ---------------- /parada — directo o autoguiado (GLOBAL) ---------------- */
 bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
+  if (!isAuthorized(msg.chat.id)) return;
   const chatId=msg.chat.id;
   const parada=match[1];
 
@@ -509,7 +557,10 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
 });
 
 /* ---------------- Mensajes de texto (autoguiados + flujo por calle) ---------------- */
+/* ---------------- Mensajes de texto (autoguiados + flujo por calle) ---------------- */
 bot.on('message', (msg)=>{
+  if (!isAuthorized(msg.chat.id)) return; // <--- ¡Faltaba este!
+  
   const chatId=msg.chat.id;
   const text=msg.text||'';
   if (text.startsWith('/')) return;
@@ -573,6 +624,46 @@ bot.on('message', (msg)=>{
 bot.on('callback_query', async (q)=>{
   const chatId=q.message.chat.id;
   const data=q.data||'';
+  // --- LÓGICA DE APROBACIÓN DE USUARIOS ---
+    if (data.startsWith('req_access:')) {
+      const [, reqId, reqName] = data.split(':');
+      bot.answerCallbackQuery(q.id, { text: 'Solicitud enviada a Rodney. ¡Paciencia!', show_alert: true });
+      
+      // Le avisa al Admin
+      if (ADMIN_ID) {
+        const msgAdmin = `🔔 *Nueva Solicitud de Acceso*\nEl usuario *${reqName}* (ID: \`${reqId}\`) quiere usar el bot.`;
+        const btnAdmin = [
+          [{ text: '✅ Aprobar', callback_data: `auth_yes:${reqId}` }, { text: '❌ Rechazar', callback_data: `auth_no:${reqId}` }]
+        ];
+        bot.sendMessage(ADMIN_ID, msgAdmin, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: btnAdmin } });
+      }
+      return;
+    }
+
+    if (data.startsWith('auth_yes:')) {
+      if (chatId !== ADMIN_ID) return bot.answerCallbackQuery(q.id, { text: 'No tenés permisos.' });
+      const newUserId = Number(data.split(':')[1]);
+      
+      const wl = loadWhitelist();
+      if (!wl.includes(newUserId)) {
+        wl.push(newUserId);
+        saveWhitelist(wl);
+      }
+      
+      bot.editMessageText(`✅ Acceso concedido al ID ${newUserId}.`, { chat_id: chatId, message_id: q.message.message_id });
+      bot.sendMessage(newUserId, `🎉 *¡Acceso Concedido!*\n\nRodney te habilitó para usar el bot. Toca /start para abrir el menú principal.`, { parse_mode: 'Markdown' });
+      return;
+    }
+
+    if (data.startsWith('auth_no:')) {
+      if (chatId !== ADMIN_ID) return bot.answerCallbackQuery(q.id, { text: 'No tenés permisos.' });
+      const newUserId = Number(data.split(':')[1]);
+      
+      bot.editMessageText(`❌ Acceso rechazado al ID ${newUserId}.`, { chat_id: chatId, message_id: q.message.message_id });
+      bot.sendMessage(newUserId, `Lo siento, tu solicitud de acceso al bot fue rechazada por el administrador.`, { parse_mode: 'Markdown' });
+      return;
+    }
+    // ----------------------------------------
 
   try{
     if (data==='menu_lineas'){ bot.answerCallbackQuery(q.id); return showLinesMenu(chatId); }
@@ -699,7 +790,8 @@ bot.on('callback_query', async (q)=>{
 });
 
 /* ---------------- /seguir — forzar seguimiento manual ---------------- */
-bot.onText(/^\/seguir(?:\s+(\d+)\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
+bot.onText(/^\/seguir(?:\s+(\d+)\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{ 
+  if (!isAuthorized(msg.chat.id)) return
   const chatId = msg.chat.id;
   const parada = match[1];
   const linea = match[2];
