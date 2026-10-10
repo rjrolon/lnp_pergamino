@@ -317,12 +317,17 @@ function buildTrackText({ linea, parada, stopGeo, coche }){
   
   const ubicacion = (coche.lat && coche.lon) ? getCalleAproximada(coche.lat, coche.lon) : null;
   const ubicacionTxt = ubicacion ? `\n📍 Aprox: ${ubicacion}` : '';
+  
+  // --- Info del Chofer y Desvío agregada al radar ---
+  const choferTxt = coche.chofer ? `\n👨‍✈️ Chofer: ${coche.chofer}` : '';
+  const desvioTxt = coche.desvio ? `\n⏱️ Desvío: ${coche.desvio}` : '';
+  
   const vmap = coche.vehiculo_maps ? `\n🗺️ Link: ${coche.vehiculo_maps}` : (coche.lat!=null&&coche.lon!=null ? `\n🗺️ Link: https://www.google.com/maps?q=${coche.lat},${coche.lon}` : '');
   
   const upd = coche.actualizado ? `\n⏱️ GPS: ${coche.actualizado}` : '';
   const etaTxt = eta ? ` · ETA ${eta}` : '';
   
-  return `${title}\n${stopLine}\n\n• ${minTxt}${etaTxt}${ramal}${dest}\nCoche ${coche.interno}${iconoAdaptado}${ubicacionTxt}${vmap}${upd}`;
+  return `${title}\n${stopLine}\n\n• ${minTxt}${etaTxt}${ramal}${dest}\nCoche ${coche.interno}${iconoAdaptado}${ubicacionTxt}${choferTxt}${desvioTxt}${vmap}${upd}`;
 }
 
 async function startTracking({ chatId, linea, parada, interno }){
