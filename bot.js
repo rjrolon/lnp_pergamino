@@ -54,11 +54,6 @@ function isAuthorized(chatId) {
 }
 
 /* ---------------- Alias de líneas/ramales ---------------- */
-// ... (acá sigue const LINE_NAMES = { "329":"Ramal A" ... etc)
-
-// ... (siguen las funciones loadWhitelist, etc.)
-// const DATA_DIR = path.join(__dirname, 'data');
-/* ---------------- Alias de líneas/ramales ---------------- */
 const LINE_NAMES = { "329":"Ramal A", "330":"Ramal B", "331":"Ramal C", "332":"Ramal D", "333":"Ramal E" };
 const lineTitle = (linea) => LINE_NAMES[linea] || `Línea ${linea}`;
 
@@ -380,15 +375,20 @@ async function startTracking({ chatId, linea, parada, interno }){
 
       const elapsed = Date.now() - t.startedAt;
       const timeLeft = TRACK_MAX_MS - elapsed;
+      
       if (timeLeft <= 0) {
         await stopTracking({ chatId, linea, interno });
         try { await bot.sendMessage(chatId, `⏹️ Seguimiento de coche ${interno} finalizado automáticamente.`); } catch {}
         return;
       }
 
+      // MODIFICACIÓN: Alerta de 2 minutos ahora incluye botón para renovar
       if (!t.warnedAutostop && timeLeft <= 2 * 60 * 1000) {
         t.warnedAutostop = true;
-        try { await bot.sendMessage(chatId, `⏳ En *2 minutos* se detiene el seguimiento de *${lineTitle(linea)} — Coche ${interno}*.`, { parse_mode:'Markdown' }); } catch {}
+        try { 
+          const btnRenovar = [[{ text: '🔄 Renovar 12 min más', callback_data: `trk_renovar:${linea}:${parada}:${interno}` }]];
+          await bot.sendMessage(chatId, `⏳ En *2 minutos* se detiene el seguimiento de *${lineTitle(linea)} — Coche ${interno}*.`, { parse_mode:'Markdown', reply_markup: { inline_keyboard: btnRenovar } }); 
+        } catch {}
       }
 
       const { id: msgId, coche } = await (async () => {
@@ -412,26 +412,30 @@ async function startTracking({ chatId, linea, parada, interno }){
   if (cur) cur.interval = interval;
 }
 
+// MODIFICACIÓN: Ahora la función borra físicamente el mensaje del radar
 async function stopTracking({ chatId, linea, interno }){
   const key=tKey(chatId,linea,interno);
   const t=TRACKERS.get(key);
-  if (t && t.interval) clearInterval(t.interval);
+  if (t) {
+    if (t.interval) clearInterval(t.interval);
+    // Borramos el mensaje de seguimiento para que no quede colgado
+    if (t.msgId) {
+      try { await bot.deleteMessage(chatId, t.msgId); } catch(e) {}
+    }
+  }
   TRACKERS.delete(key);
 }
 
 /* ---------------- /start y /ayuda ---------------- */
-/* ---------------- /start y /ayuda ---------------- */
 bot.onText(/^\/start$/, (msg)=>{
   const chatId = msg.chat.id;
   
-  // VERIFICACIÓN DE PATENTE (WHITELIST)
   if (!isAuthorized(chatId)) {
     const txt = `⛔ *Bot Privado*\n\nHola ${msg.from.first_name || 'usuario'}. Este bot de colectivos está en fase de pruebas (beta privada) para evitar saturar el sistema.\n\n¿Querés pedirle autorización al administrador (Rodney) para usarlo?`;
     const btn = [[{ text: '🙋‍♂️ Solicitar Acceso', callback_data: `req_access:${chatId}:${msg.from.first_name || 'SinNombre'}` }]];
     return bot.sendMessage(chatId, txt, { parse_mode:'Markdown', reply_markup: { inline_keyboard: btn } });
   }
 
-  // SI ESTÁ AUTORIZADO, SE MUESTRA EL MENÚ NORMAL
   const menu = [
     [{ text:'🚌 Ver líneas disponibles', callback_data:'menu_lineas' }],
     [{ text:'⭐ Favoritos', callback_data:'menu_favs' }],
@@ -456,12 +460,12 @@ bot.onText(/^\/favs|\/favoritos$/i, (msg) => {
   if (!isAuthorized(msg.chat.id)) return;
   showFavsMenu(msg.chat.id);
 });
+
 /* ---------------- /codigo — directo o autoguiado ---------------- */
 bot.onText(/^\/codigo(?:\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
-  if (!isAuthorized(msg.chat.id)) return; // ¡Acá va el candado!
+  if (!isAuthorized(msg.chat.id)) return;
   
   const chatId=msg.chat.id;
-  // ... el resto del código sigue igual ...
   const p=match[1], l=match[2];
 
   if (p && l) {
@@ -529,14 +533,12 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
     const ramal = a.ramal ? ` · ${a.ramal}` : '';
     const dest = a.destino ? ` → ${a.destino}` : '';
     
-    // Icono ♿ si viene adaptado
     const iconoAdaptado = a.adaptado ? ' ♿' : '';
     const coche = a.interno ? ` · Coche ${a.interno}${iconoAdaptado}` : '';
     
     const ubicacion = (a.lat && a.lon) ? getCalleAproximada(a.lat, a.lon) : null;
     const ubicacionTxt = ubicacion ? `\n   📍 Aprox: ${ubicacion}` : '';
     
-    // Info del Chofer y Desvío
     const choferTxt = a.chofer ? `\n   👨‍✈️ Chofer: ${a.chofer}` : '';
     const desvioTxt = a.desvio ? `\n   ⏱️ Desvío: ${a.desvio}` : '';
     
@@ -557,9 +559,8 @@ bot.onText(/^\/parada(?:\s+(\d+))?$/, async (msg, match)=>{
 });
 
 /* ---------------- Mensajes de texto (autoguiados + flujo por calle) ---------------- */
-/* ---------------- Mensajes de texto (autoguiados + flujo por calle) ---------------- */
 bot.on('message', (msg)=>{
-  if (!isAuthorized(msg.chat.id)) return; // <--- ¡Faltaba este!
+  if (!isAuthorized(msg.chat.id)) return;
   
   const chatId=msg.chat.id;
   const text=msg.text||'';
@@ -624,46 +625,68 @@ bot.on('message', (msg)=>{
 bot.on('callback_query', async (q)=>{
   const chatId=q.message.chat.id;
   const data=q.data||'';
+
   // --- LÓGICA DE APROBACIÓN DE USUARIOS ---
-    if (data.startsWith('req_access:')) {
-      const [, reqId, reqName] = data.split(':');
-      bot.answerCallbackQuery(q.id, { text: 'Solicitud enviada a Rodney. ¡Paciencia!', show_alert: true });
-      
-      // Le avisa al Admin
-      if (ADMIN_ID) {
-        const msgAdmin = `🔔 *Nueva Solicitud de Acceso*\nEl usuario *${reqName}* (ID: \`${reqId}\`) quiere usar el bot.`;
-        const btnAdmin = [
-          [{ text: '✅ Aprobar', callback_data: `auth_yes:${reqId}` }, { text: '❌ Rechazar', callback_data: `auth_no:${reqId}` }]
-        ];
-        bot.sendMessage(ADMIN_ID, msgAdmin, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: btnAdmin } });
-      }
-      return;
+  if (data.startsWith('req_access:')) {
+    const [, reqId, reqName] = data.split(':');
+    bot.answerCallbackQuery(q.id, { text: 'Solicitud enviada a Rodney. ¡Paciencia!', show_alert: true });
+    
+    if (ADMIN_ID) {
+      const msgAdmin = `🔔 *Nueva Solicitud de Acceso*\nEl usuario *${reqName}* (ID: \`${reqId}\`) quiere usar el bot.`;
+      const btnAdmin = [
+        [{ text: '✅ Aprobar', callback_data: `auth_yes:${reqId}` }, { text: '❌ Rechazar', callback_data: `auth_no:${reqId}` }]
+      ];
+      bot.sendMessage(ADMIN_ID, msgAdmin, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: btnAdmin } });
     }
+    return;
+  }
 
-    if (data.startsWith('auth_yes:')) {
-      if (chatId !== ADMIN_ID) return bot.answerCallbackQuery(q.id, { text: 'No tenés permisos.' });
-      const newUserId = Number(data.split(':')[1]);
-      
-      const wl = loadWhitelist();
-      if (!wl.includes(newUserId)) {
-        wl.push(newUserId);
-        saveWhitelist(wl);
-      }
-      
-      bot.editMessageText(`✅ Acceso concedido al ID ${newUserId}.`, { chat_id: chatId, message_id: q.message.message_id });
-      bot.sendMessage(newUserId, `🎉 *¡Acceso Concedido!*\n\nRodney te habilitó para usar el bot. Toca /start para abrir el menú principal.`, { parse_mode: 'Markdown' });
-      return;
+  if (data.startsWith('auth_yes:')) {
+    if (chatId !== ADMIN_ID) return bot.answerCallbackQuery(q.id, { text: 'No tenés permisos.' });
+    const newUserId = Number(data.split(':')[1]);
+    
+    const wl = loadWhitelist();
+    if (!wl.includes(newUserId)) {
+      wl.push(newUserId);
+      saveWhitelist(wl);
     }
+    
+    bot.editMessageText(`✅ Acceso concedido al ID ${newUserId}.`, { chat_id: chatId, message_id: q.message.message_id });
+    bot.sendMessage(newUserId, `🎉 *¡Acceso Concedido!*\n\nRodney te habilitó para usar el bot. Toca /start para abrir el menú principal.`, { parse_mode: 'Markdown' });
+    return;
+  }
 
-    if (data.startsWith('auth_no:')) {
-      if (chatId !== ADMIN_ID) return bot.answerCallbackQuery(q.id, { text: 'No tenés permisos.' });
-      const newUserId = Number(data.split(':')[1]);
+  if (data.startsWith('auth_no:')) {
+    if (chatId !== ADMIN_ID) return bot.answerCallbackQuery(q.id, { text: 'No tenés permisos.' });
+    const newUserId = Number(data.split(':')[1]);
+    
+    bot.editMessageText(`❌ Acceso rechazado al ID ${newUserId}.`, { chat_id: chatId, message_id: q.message.message_id });
+    bot.sendMessage(newUserId, `Lo siento, tu solicitud de acceso al bot fue rechazada por el administrador.`, { parse_mode: 'Markdown' });
+    return;
+  }
+
+  // --- MODIFICACIÓN: LÓGICA DE RENOVACIÓN DE TRACKING ---
+  if (data.startsWith('trk_renovar:')){
+    const [, linea, parada, interno] = data.split(':');
+    const key = tKey(chatId, linea, interno);
+    const t = TRACKERS.get(key);
+    
+    if (t) {
+      // Engañamos al contador seteando la fecha de inicio 2 minutos en el futuro
+      // Esto hace que falten exactamente 12 minutos para que se corte.
+      t.startedAt = Date.now() + (2 * 60 * 1000); 
+      t.warnedAutostop = false;
+      bot.answerCallbackQuery(q.id, { text:`✅ Seguimiento renovado por 12 min` });
       
-      bot.editMessageText(`❌ Acceso rechazado al ID ${newUserId}.`, { chat_id: chatId, message_id: q.message.message_id });
-      bot.sendMessage(newUserId, `Lo siento, tu solicitud de acceso al bot fue rechazada por el administrador.`, { parse_mode: 'Markdown' });
-      return;
+      // Borramos el cartelito molesto de advertencia que contenía el botón
+      try { await bot.deleteMessage(chatId, q.message.message_id); } catch {}
+    } else {
+      bot.answerCallbackQuery(q.id, { text:`El seguimiento ya finalizó`, show_alert: true });
+      try { await bot.deleteMessage(chatId, q.message.message_id); } catch {}
     }
-    // ----------------------------------------
+    return;
+  }
+  // ----------------------------------------
 
   try{
     if (data==='menu_lineas'){ bot.answerCallbackQuery(q.id); return showLinesMenu(chatId); }
@@ -776,8 +799,9 @@ bot.on('callback_query', async (q)=>{
     if (data.startsWith('trk_stop:')){
       const [, linea, parada, interno] = data.split(':');
       bot.answerCallbackQuery(q.id, { text:`Seguimiento detenido` });
+      
+      // Ya no hace falta editMessageReplyMarkup acá, porque stopTracking va a borrar el mensaje entero.
       await stopTracking({ chatId, linea, interno });
-      try { await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id:chatId, message_id:q.message.message_id }); } catch {}
       return;
     }
 
@@ -810,4 +834,4 @@ bot.onText(/^\/seguir(?:\s+(\d+)\s+(\d+)\s+(\d+))?$/, async (msg, match)=>{
   bot.sendMessage(chatId, 'Para forzar el seguimiento de un coche específico, usá el formato:\n`/seguir [parada] [linea] [coche]`\n\nEjemplo: `/seguir 0063 329 50`', { parse_mode: 'Markdown' });
 });
 
-console.log('[OK] Bot listo: /start /menu /codigo /parada /favs + seguimiento 📡 (autostop 10 min + avisos)');
+console.log('[OK] Bot listo: /start /menu /codigo /parada /favs + seguimiento 📡 (autostop 10 min + avisos y limpieza)');
